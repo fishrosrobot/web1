@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>🌿 草场碳汇监测系统 v2.0</title>
+    
+    <!-- AdminLTE 4 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4/dist/css/adminlte.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===== 全局重置 ===== */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(145deg, #f0f9f0 0%, #e8f5e9 100%);
+        }
+        .wrapper {
+            background: transparent;
+        }
+        /* ===== 顶部导航栏 ===== */
+        .navbar-custom {
+            background: linear-gradient(90deg, #2e7d32 0%, #43a047 100%);
+            box-shadow: 0 4px 20px rgba(46,125,50,0.3);
+        }
+        .navbar-custom .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .navbar-custom .navbar-brand small {
+            font-weight: 300;
+            opacity: 0.85;
+        }
+        /* ===== 侧边栏 ===== */
+        .main-sidebar {
+            background: linear-gradient(180deg, #1b5e20 0%, #2e7d32 100%) !important;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.2);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.75);
+            transition: all 0.3s;
+            border-radius: 0.5rem;
+            margin: 2px 8px;
+        }
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            transform: translateX(5px);
+        }
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-left: 4px solid #a5d6a7;
+        }
+        /* ===== 卡片美化 ===== */
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.12);
+        }
+        .card-header {
+            background: white;
+            border-bottom: 2px solid #e8f5e9;
+            font-weight: 600;
+        }
+        /* ===== 统计卡片 ===== */
+        .stat-card {
+            background: white;
+            border-radius: 14px;
+            padding: 18px 22px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            border-left: 5px solid #43a047;
+        }
+        .stat-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            transform: scale(1.02);
+        }
+        .stat-card .icon {
+            font-size: 2.2rem;
+            color: #43a047;
+        }
+        .stat-card .number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .stat-card .label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        /* ===== 上传区域 ===== */
+        .upload-zone {
+            border: 3px dashed #c8e6c9;
+            border-radius: 20px;
+            padding: 35px 20px;
+            text-align: center;
+            background: #f1f8e9;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #43a047;
+            background: #e8f5e9;
+            box-shadow: 0 0 20px rgba(67,160,71,0.2);
+        }
+        .upload-zone i {
+            font-size: 3rem;
+            color: #81c784;
+        }
+        .upload-zone p {
+            margin: 10px 0 0;
+            color: #558b2f;
+        }
+        /* ===== 图片画廊 ===== */
+        .gallery-item {
+            position: relative;
+            width: 140px;
+            height: 105px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s;
+        }
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+        .gallery-item .badge-season {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(0,0,0,0.55);
+            color: white;
+            backdrop-filter: blur(4px);
+        }
+        .gallery-item .delete-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: rgba(220,53,69,0.85);
+            color: white;
+            border: none;
+            font-size: 0.8rem;
+            line-height: 26px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .gallery-item:hover .delete-btn {
+            opacity: 1;
+        }
+        /* ===== 检测结果卡片 ===== */
+        .detection-result {
+            background: linear-gradient(135deg, #ffffff 0%, #f1f8e9 100%);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #c8e6c9;
+        }
+        .detection-result .season-badge {
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .season-spring { background: #c8e6c9; color: #2e7d32; }
+        .season-summer { background: #fff9c4; color: #f57f17; }
+        .season-autumn { background: #ffe0b2; color: #e65100; }
+        .season-winter  { background: #e3f2fd; color: #1565c0; }
+        /* ===== 图表容器 ===== */
+        #carbonChart {
+            width: 100%;
+            height: 420px;
+            border-radius: 12px;
+            background: #fafffa;
+        }
+        /* ===== 底部 ===== */
+        .footer {
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            padding: 15px 0;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+        /* ===== 响应式微调 ===== */
+        @media (max-width: 768px) {
+            .gallery-item { width: 100px; height: 75px; }
+            #carbonChart { height: 280px; }
+        }
+    </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+
+<div class="wrapper">
+
+    <!-- ===== 顶部导航栏 ===== -->
+    <nav class="navbar navbar-expand navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-tree-fill me-2"></i> 草场碳汇监测系统
+                <small class="d-none d-sm-inline">· 智慧生态 · 精准计量</small>
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="nav-link text-white"><i class="bi bi-calendar-check"></i> 2026-06-27</span>
+                <span class="nav-link text-white"><i class="bi bi-geo-alt"></i> 中国·湖南</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== 侧边栏 ===== -->
+    <aside class="main-sidebar sidebar-dark elevation-4">
+        <div class="sidebar">
+            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                <div class="image">
+                    <img src="https://via.placeholder.com/40/43a047/ffffff?text=🌿" class="img-circle elevation-2" alt="User">
+                </div>
+                <div class="info">
+                    <a href="#" class="d-block text-white fw-bold">管理员</a>
+                </div>
+            </div>
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active">
+                            <i class="nav-icon bi bi-speedometer2"></i>
+                            <p>数据看板</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon bi bi-images"></i>
+                            <p>图像管理</p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon bi bi-bar-chart-line"></i>
+                            <p>历史趋势</p>
+                        </a>
+                    </li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- ===== 主内容区 ===== -->
+    <div class="content-wrapper" style="background: transparent;">
+
+        <!-- 页面标题 -->
+        <section class="content-header">
+            <div class="container-fluid py-3">
+                <h1 class="fw-bold" style="color: #1b5e20;">
+                    <i class="bi bi-grid-3x3-gap-fill me-2"></i> 碳排放监测面板
+                    <small class="text-muted fw-normal">实时追踪草场碳汇动态</small>
+                </h1>
+            </div>
+        </section>
+
+        <!-- 核心内容 -->
+        <section class="content">
+            <div class="container-fluid">
+
+                <!-- ===== 第一行：统计卡片 ===== -->
+                <div class="row g-3 mb-4">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="number" id="totalReduction">0</div>
+                                    <div class="label">总减排量 (吨)</div>
+                                </div>
+                                <div class="icon"><i class="bi bi-arrow-down-circle"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-card" style="border-left-color: #ff9800;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="number" id="currentCarbon">0</div>
+                                    <div class="label">当前碳排 (kg/ha)</div>
+                                </div>
+                                <div class="icon" style="color:#ff9800;"><i class="bi bi-thermometer-half"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-card" style="border-left-color: #2196f3;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="number" id="totalImages">0</div>
+                                    <div class="label">已分析图片</div>
+                                </div>
+                                <div class="icon" style="color:#2196f3;"><i class="bi bi-camera"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-card" style="border-left-color: #9c27b0;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="number" id="seasonCount">--</div>
+                                    <div class="label">当前季节</div>
+                                </div>
+                                <div class="icon" style="color:#9c27b0;"><i class="bi bi-flower1"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== 第二行：上传区域 ===== -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="upload-zone" id="dropZone">
+                                    <i class="bi bi-cloud-upload"></i>
+                                    <p class="fw-semibold">拖拽草场照片至此处，或点击选择文件</p>
+                                    <small class="text-muted">支持 JPG / PNG / WEBP，最多 10 张</small>
+                                    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== 第三行：左图 + 右图表 + 右检测结果 ===== -->
+                <div class="row g-4">
+                    
+                    <!-- 左侧：图片画廊 -->
+                    <div class="col-lg-5">
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-images me-1"></i> 图像采集区</span>
+                                <span class="badge bg-success" id="imageCountBadge">0 张</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap gap-2 align-items-start" id="imageGallery">
+                                    <div class="text-center text-muted p-5 w-100" id="emptyHint">
+                                        <i class="bi bi-image" style="font-size: 2rem;"></i>
+                                        <p class="mt-2">暂无图片，请上传</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：图表 + 检测结果 -->
+                    <div class="col-lg-7">
+                        <!-- 图表卡片 -->
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-bar-chart-steps me-1"></i> 五年碳排放趋势</span>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-success active" id="viewBoth">综合</button>
+                                    <button class="btn btn-outline-danger" id="viewBefore">施工前</button>
+                                    <button class="btn btn-outline-success" id="viewAfter">施工后</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="carbonChart"></div>
+                            </div>
+                        </div>
+
+                        <!-- 图片检测结果卡片 -->
+                        <div class="card">
+                            <div class="card-header">
+                                <span><i class="bi bi-search-heart me-1"></i> 最新图片检测结果</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="detectionResult" class="detection-result text-center">
+                                    <i class="bi bi-hourglass-split" style="font-size: 2rem; color: #aaa;"></i>
+                                    <p class="text-muted mt-2">上传图片后，此处将显示季节、月份及预估碳排放量</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== 底部 ===== -->
+    <footer class="footer">
+        <strong>© 2026 草场碳汇监测系统</strong> · 数据仅供参考，实际以官方核算为准
+    </footer>
+
+</div>
+
+<!-- ===== 依赖 JS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@4/dist/js/adminlte.min.js"></script>
+
+<script>
+    // ============================================================
+    // 1. 模拟数据生成（五年季节性碳排放）
+    // ============================================================
+    function generateFiveYearData(startYear = 2022) {
+        const years = 5;
+        const monthsPerYear = 48; // 每月一个点，共 48 个月
+        const totalPoints = years * 12;
+        const categories = [];
+        const beforeData = [];
+        const afterData = [];
+
+        for (let i = 0; i < totalPoints; i++) {
+            const year = startYear + Math.floor(i / 12);
+            const month = (i % 12) + 1;
+            categories.push(`${year}-${String(month).padStart(2,'0')}`);
+
+            // 季节因子：冬季低 (0.6), 春季回升 (0.8), 夏季高 (1.0), 秋季下降 (0.7)
+            let seasonalFactor;
+            if (month >= 3 && month <= 5) seasonalFactor = 0.8 + Math.random() * 0.15;  // 春
+            else if (month >= 6 && month <= 8) seasonalFactor = 0.95 + Math.random() * 0.1; // 夏
+            else if (month >= 9 && month <= 11) seasonalFactor = 0.7 + Math.random() * 0.15; // 秋
+            else seasonalFactor = 0.55 + Math.random() * 0.15; // 冬
+
+            // 施工前：基线 160 + 随机噪声，每年略升（模拟退化）
+            const baseBefore = 160 + (year - startYear) * 3;
+            const noiseBefore = (Math.random() - 0.5) * 20;
+            const valBefore = Math.max(100, baseBefore + noiseBefore * seasonalFactor);
+            beforeData.push(Math.round(valBefore));
+
+            // 施工后：从第1年开始逐步下降，但保留季节波动
+            // 假设施工在第0年年底完成，第1年开始见效
+            const reductionRate = Math.min(1, (year - startYear + 1) / 6); // 逐年递减
+            const baseAfter = 150 * (1 - reductionRate * 0.7) + 30;
+            const noiseAfter = (Math.random() - 0.5) * 15;
+            const valAfter = Math.max(20, baseAfter + noiseAfter * seasonalFactor);
+            afterData.push(Math.round(valAfter));
+        }
+        return { categories, beforeData, afterData };
+    }
+
+    const fiveYearData = generateFiveYearData(2022);
+
+    // ============================================================
+    // 2. 初始化 ECharts
+    // ============================================================
+    const chartDom = document.getElementById('carbonChart');
+    const myChart = echarts.init(chartDom);
+
+    function buildOption(showBefore = true, showAfter = true) {
+        const series = [];
+        if (showBefore) {
+            series.push({
+                name: '施工前 (退化趋势)',
+                type: 'line',
+                data: fiveYearData.beforeData,
+                smooth: true,
+                symbol: 'none',
+                lineStyle: { width: 2, color: '#e53935' },
+                areaStyle: { color: 'rgba(229,57,53,0.1)' },
+                markLine: {
+                    silent: true,
+                    data: [{ type: 'average', name: '平均值' }],
+                    label: { formatter: '平均: {c}' }
+                }
+            });
+        }
+        if (showAfter) {
+            series.push({
+                name: '施工后 (恢复趋势)',
+                type: 'line',
+                data: fiveYearData.afterData,
+                smooth: true,
+                symbol: 'none',
+                lineStyle: { width: 2, color: '#43a047' },
+                areaStyle: { color: 'rgba(67,160,71,0.15)' },
+                markLine: {
+                    silent: true,
+                    data: [{ type: 'average', name: '平均值' }],
+                    label: { formatter: '平均: {c}' }
+                }
+            });
+        }
+        return {
+            tooltip: {
+                trigger: 'axis',
+                formatter: function(params) {
+                    let res = '<strong>' + params[0].axisValue + '</strong><br/>';
+                    params.forEach(p => {
+                        res += p.marker + ' ' + p.seriesName + ': ' + p.value + ' kg/ha<br/>';
+                    });
+                    return res;
+                }
+            },
+            legend: {
+                data: ['施工前 (退化趋势)', '施工后 (恢复趋势)'],
+                top: 10,
+                textStyle: { fontSize: 13 }
+            },
+            grid: { left: '3%', right: '4%', bottom: '8%', containLabel: true },
+            xAxis: {
+                type: 'category',
+                data: fiveYearData.categories,
+                axisLabel: {
+                    interval: 11, // 每年显示一个标签
+                    rotate: 45,
+                    fontSize: 10
+                },
+                splitLine: { show: false }
+            },
+            yAxis: {
+                type: 'value',
+                name: '碳排放量 (kg/ha)',
+                min: 0,
+                max: 250,
+                splitLine: { lineStyle: { type: 'dashed', color: '#ddd' } }
+            },
+            dataZoom: [
+                { type: 'inside', start: 0, end: 100 },
+                { type: 'slider', start: 0, end: 100, height: 20, bottom: 10 }
+            ],
+            series: series
+        };
+    }
+
+    myChart.setOption(buildOption(true, true));
+
+    // 图表切换按钮
+    document.getElementById('viewBoth').addEventListener('click', function() {
+        document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        myChart.setOption(buildOption(true, true), true);
+    });
+    document.getElementById('viewBefore').addEventListener('click', function() {
+        document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        myChart.setOption(buildOption(true, false), true);
+    });
+    document.getElementById('viewAfter').addEventListener('click', function() {
+        document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        myChart.setOption(buildOption(false, true), true);
+    });
+
+    // 自适应
+    window.addEventListener('resize', () => myChart.resize());
+
+    // ============================================================
+    // 3. 图片上传与检测模拟
+    // ============================================================
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const gallery = document.getElementById('imageGallery');
+    const emptyHint = document.getElementById('emptyHint');
+    const imageCountBadge = document.getElementById('imageCountBadge');
+    const detectionResult = document.getElementById('detectionResult');
+    const totalImagesSpan = document.getElementById('totalImages');
+    const currentCarbonSpan = document.getElementById('currentCarbon');
+    const totalReductionSpan = document.getElementById('totalReduction');
+    const seasonCountSpan = document.getElementById('seasonCount');
+
+    let imageCount = 0;
+    let lastDetection = null;
+
+    // 模拟后端检测
+    function simulateDetection() {
+        const seasons = ['春', '夏', '秋', '冬'];
+        const seasonIdx = Math.floor(Math.random() * 4);
+        const season = seasons[seasonIdx];
+        const monthMap = { '春': [3,4,5], '夏': [6,7,8], '秋': [9,10,11], '冬': [12,1,2] };
+        const possibleMonths = monthMap[season];
+        const month = possibleMonths[Math.floor(Math.random() * possibleMonths.length)];
+        // 碳排放量：根据季节和施工后趋势模拟
+        let base = 60;
+        if (season === '夏') base = 80;
+        else if (season === '冬') base = 35;
+        else if (season === '春') base = 55;
+        else if (season === '秋') base = 50;
+        const carbon = Math.round(base + (Math.random() - 0.5) * 20);
+        const confidence = Math.round(85 + Math.random() * 12);
+        return { season, month, carbon, confidence };
+    }
+
+    function updateDetectionUI(detection) {
+        const seasonClass = 'season-' + detection.season.toLowerCase();
+        detectionResult.innerHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-5 text-center">
+                    <span class="season-badge ${seasonClass}">
+                        <i class="bi bi-${detection.season === '春' ? 'flower1' : detection.season === '夏' ? 'sun' : detection.season === '秋' ? 'cloud-sun' : 'snow'}"></i>
+                        ${detection.season}季
+                    </span>
+                    <div class="mt-2"><strong>月份:</strong> ${detection.month}月</div>
+                </div>
+                <div class="col-md-7">
+                    <div class="d-flex justify-content-around">
+                        <div class="text-center">
+                            <div class="fs-3 fw-bold" style="color:#2e7d32;">${detection.carbon}</div>
+                            <small class="text-muted">碳排放 (kg/ha)</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="fs-3 fw-bold" style="color:#1565c0;">${detection.confidence}%</div>
+                            <small class="text-muted">置信度</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-2">
+            <small class="text-muted">与去年同期相比：${detection.carbon > 60 ? '偏高' : '偏低'} · 建议持续监测</small>
+        `;
+        // 更新统计卡片
+        currentCarbonSpan.textContent = detection.carbon;
+        seasonCountSpan.textContent = detection.season + '季';
+        // 模拟总减排量（随便算一下）
+        const totalReduction = Math.round((fiveYearData.beforeData[0] - detection.carbon) * 0.87);
+        totalReductionSpan.textContent = totalReduction;
+    }
+
+    function addImageToGallery(src, detection) {
+        if (emptyHint && !emptyHint.hidden) {
+            emptyHint.hidden = true;
+        }
+        const div = document.createElement('div');
+        div.className = 'gallery-item';
+        div.innerHTML = `
+            <img src="${src}" alt="草场照片">
+            <span class="badge-season">${detection.season}季</span>
+            <button class="delete-btn" title="删除">&times;</button>
+        `;
+        div.querySelector('.delete-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            div.remove();
+            imageCount--;
+            updateCounters();
+            if (imageCount === 0) {
+                emptyHint.hidden = false;
+                detectionResult.innerHTML = `<i class="bi bi-hourglass-split" style="font-size: 2rem; color: #aaa;"></i>
+                                             <p class="text-muted mt-2">上传图片后，此处将显示季节、月份及预估碳排放量</p>`;
+            }
+        });
+        gallery.appendChild(div);
+        imageCount++;
+        updateCounters();
+        // 更新检测结果
+        updateDetectionUI(detection);
+    }
+
+    function updateCounters() {
+        imageCountBadge.textContent = imageCount + ' 张';
+        totalImagesSpan.textContent = imageCount;
+    }
+
+    // 处理上传
+    function handleFiles(files) {
+        const maxFiles = 10;
+        const toProcess = Array.from(files).slice(0, maxFiles - imageCount);
+        toProcess.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const detection = simulateDetection();
+                addImageToGallery(e.target.result, detection);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // 点击上传
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', function(e) {
+        handleFiles(e.target.files);
+        this.value = ''; // 允许重复上传相同文件
+    });
+
+    // 拖拽上传
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) handleFiles(files);
+    });
+
+    // ============================================================
+    // 4. 初始演示数据（预置两张示例图片，展示效果）
+    // ============================================================
+    // 使用占位图片模拟
+    const demoDetections = [
+        { season: '夏', month: 7, carbon: 72, confidence: 91 },
+        { season: '冬', month: 1, carbon: 38, confidence: 88 }
+    ];
+    const demoUrls = [
+        'https://via.placeholder.com/280x210/81c784/ffffff?text=草场+夏季',
+        'https://via.placeholder.com/280x210/90caf9/ffffff?text=草场+冬季'
+    ];
+    demoUrls.forEach((url, idx) => {
+        const detection = demoDetections[idx];
+        addImageToGallery(url, detection);
+    });
+
+    // 更新统计卡片初始值
+    totalReductionSpan.textContent = 86;
+    currentCarbonSpan.textContent = 72;
+    totalImagesSpan.textContent = 2;
+    seasonCountSpan.textContent = '夏季';
+
+    console.log('🌿 草场碳汇监测系统已启动！');
+</script>
+<script>
+    $(document).ready(function () {
+        // 1. 激活菜单的高亮和点击切换效果
+        // 获取当前页面的 URL 路径，比如 "index.html"
+        var path = window.location.pathname.split('/').pop(); 
+        
+        // 遍历所有左侧菜单
+        $('.nav-sidebar a').each(function() {
+            // 如果菜单链接包含当前文件名，就给父级加高亮样式
+            if ($(this).attr('href') && $(this).attr('href').indexOf(path) !== -1) {
+                $(this).parent().addClass('active');
+                // 如果是在折叠菜单里，展开父菜单
+                if ($(this).parent().parent().hasClass('nav-treeview')) {
+                    $(this).parent().parent().parent().addClass('active');
+                    $(this).parent().parent().parent().children('a').first().addClass('active');
+                }
+            }
+
+            // 绑定点击事件：点击后关闭移动端的侧边栏
+            $(this).on('click', function(e) {
+                // 如果是子菜单项，阻止默认跳转（因为我们还没做其他页面）
+                if ($(this).parent().hasClass('nav-treeview')) {
+                    e.preventDefault();
+                }
+                
+                // 移动端点击菜单后自动收起侧边栏
+                if ($('body').hasClass('sidebar-collapse')) {
+                    $('body').removeClass('sidebar-collapse');
+                }
+            });
+        });
+
+        // 2. 让顶部搜索框有呼吸动画效果
+        $('.form-control-navbar').on('focus', function() {
+            $(this).closest('.input-group').addClass('focused');
+        }).on('blur', function() {
+            $(this).closest('.input-group').removeClass('focused');
+        });
+    });
+</script>
+</body>
+</html>
